@@ -232,7 +232,7 @@ export const en = {
     premiumActiveDesc: 'Your account is already unlocked for paid content.',
     paymentPendingDesc: 'Your receipt was submitted and is waiting for review.',
     paymentRejectedDesc: 'Please review the rejection note and submit a new receipt.',
-    paymentRequiredDesc: 'Matric premium subjects and locked chapters require a verified 200 ETB payment.',
+    paymentRequiredDesc: 'A verified payment is required to unlock premium access.',
     verified: 'Verified',
     approved: 'Approved',
     pending: 'Pending Review',

@@ -42,7 +42,6 @@ const NotesSubjectsPage = lazy(() => import("./screens/NotesSubjectsPage"));
 const NotesChaptersPage = lazy(() => import("./screens/NotesChaptersPage"));
 const BooksPage = lazy(() => import("./screens/BooksPage"));
 const BookSubjectsPage = lazy(() => import("./screens/BookSubjectsPage"));
-const WebRtcPage = lazy(() => import("./screens/WebRtcPage"));
 const HostPage = lazy(() => import("./screens/HostPage"));
 const JoinPage = lazy(() => import("./screens/JoinPage"));
 const SessionPage = lazy(() => import("./screens/SessionPage"));
@@ -233,13 +232,6 @@ const App = () => (
                   <ProtectedRoute>
                     <Suspense fallback={<PageLoader />}>
                       <SessionPage />
-                    </Suspense>
-                  </ProtectedRoute>
-                } />
-                <Route path="/webrtc" element={
-                  <ProtectedRoute>
-                    <Suspense fallback={<PageLoader />}>
-                      <WebRtcPage />
                     </Suspense>
                   </ProtectedRoute>
                 } />

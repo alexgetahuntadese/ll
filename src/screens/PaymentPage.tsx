@@ -23,7 +23,10 @@ import { paymentService, type PaymentSubmissionWithReceiptUrl } from "@/lib/back
 import { toast } from "sonner";
 import { useLanguage } from "@/i18n/LanguageContext";
 
-const PAYMENT_AMOUNT_BIRR = "200";
+const PAYMENT_PLANS = [
+  { id: "year", label: "1 year", amount: 149 },
+  { id: "sixMonths", label: "6 months", amount: 99.99 },
+] as const;
 
 const bankOptions = {
   cbe: {
@@ -66,15 +69,16 @@ const PaymentPage = () => {
   const { displayName, hasPremiumAccess, isAdmin, paymentStatus, profile, refreshProfile, user } = useAuth();
   const { t } = useLanguage();
   const [paymentMethod, setPaymentMethod] = useState<"cbe" | "telebirr">("cbe");
+  const [selectedPlan, setSelectedPlan] = useState<typeof PAYMENT_PLANS[number]>(PAYMENT_PLANS[0]);
   const [transactionRef, setTransactionRef] = useState("");
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [fileInputKey, setFileInputKey] = useState(0);
-  const [notes, setNotes] = useState("");
   const [submissions, setSubmissions] = useState<PaymentSubmissionWithReceiptUrl[]>([]);
   const [isLoadingSubmissions, setIsLoadingSubmissions] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const currentChannel = bankOptions[paymentMethod];
+  const paymentAmount = selectedPlan.amount;
 
   const accessState = useMemo(() => {
     if (hasPremiumAccess) {
@@ -172,26 +176,24 @@ const PaymentPage = () => {
           userId,
           userName: profile?.name || displayName || null,
           userPhone: profile?.phone || null,
-          amount: Number(PAYMENT_AMOUNT_BIRR),
+          amount: paymentAmount,
           bankName: currentChannel.label,
           accountNumber: currentChannel.accountNumber,
           paymentMethod,
           transactionRef: transactionRef.trim(),
           receiptFile,
-          submitterNotes: notes.trim(),
         });
       } else {
         await paymentService.submitPayment({
           userId,
           userName: profile?.name || displayName || null,
           userPhone: profile?.phone || null,
-          amount: Number(PAYMENT_AMOUNT_BIRR),
+          amount: paymentAmount,
           bankName: currentChannel.label,
           accountNumber: currentChannel.accountNumber,
           paymentMethod,
           transactionRef: transactionRef.trim(),
           receiptFile: null,
-          submitterNotes: notes.trim(),
         });
       }
 
@@ -199,7 +201,6 @@ const PaymentPage = () => {
       setTransactionRef("");
       setReceiptFile(null);
       setFileInputKey((current) => current + 1);
-      setNotes("");
       await Promise.all([refreshSubmissions(), refreshProfile()]);
     } catch (error: any) {
       toast.error(error?.message || t("payment.paymentError"));
@@ -237,10 +238,10 @@ const PaymentPage = () => {
             <CardHeader>
               <CardTitle className="text-white flex items-center gap-2">
                 <CreditCard className="h-5 w-5" />
-                {t("payment.payAmount")}
+                Submit payment
               </CardTitle>
               <CardDescription className="text-white/60">
-                {t("payment.description")}
+                Submit one verified payment to unlock paid matric subjects
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -249,11 +250,40 @@ const PaymentPage = () => {
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <p className="text-white/65 text-sm">{t("payment.requiredAmount")}</p>
-                      <p className="text-3xl font-bold text-white">{t("payment.payAmount")}</p>
+                      <p className="text-3xl font-bold text-white">{paymentAmount.toLocaleString(undefined, {
+                        minimumFractionDigits: Number.isInteger(paymentAmount) ? 0 : 2,
+                      })} ETB</p>
+                      <p className="text-sm text-white/55 mt-1">{selectedPlan.label} subscription</p>
                     </div>
                     <ShieldCheck className="h-8 w-8 text-emerald-300" />
                   </div>
                   <p className="mt-3 text-sm text-white/55">{accessState.description}</p>
+                </div>
+
+                <div className="space-y-3">
+                  <p className="text-sm font-semibold text-white">Choose your subscription plan</p>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {PAYMENT_PLANS.map((plan) => (
+                      <button
+                        key={plan.id}
+                        type="button"
+                        onClick={() => setSelectedPlan(plan)}
+                        className={`rounded-2xl border px-4 py-3 text-left transition ${
+                          selectedPlan.id === plan.id
+                            ? "border-amber-400 bg-amber-500/10 text-white"
+                            : "border-white/10 bg-white/[0.02] text-white/75 hover:border-white/20 hover:bg-white/[0.05]"
+                        }`}
+                      >
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-xl font-semibold">{plan.amount.toLocaleString(undefined, {
+                            minimumFractionDigits: Number.isInteger(plan.amount) ? 0 : 2,
+                          })} ETB</span>
+                          <span className="text-sm text-white/60">{plan.label}</span>
+                        </div>
+                        <p className="mt-1 text-sm text-white/55">{plan.id === "year" ? "Access for one year." : "Access for six months."}</p>
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
                 <div className="space-y-2">
@@ -310,17 +340,6 @@ const PaymentPage = () => {
                   )}
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="notes" className="text-white">{t("payment.notesForReview")}</Label>
-                  <Textarea
-                    id="notes"
-                    value={notes}
-                    onChange={(event) => setNotes(event.target.value)}
-                    placeholder={t("payment.optionalNotes")}
-                    className="bg-white/[0.04] border-white/15 text-white placeholder:text-white/30"
-                  />
-                </div>
-
                 <div className="rounded-xl border border-sky-400/30 bg-sky-500/10 p-4 text-sm text-sky-100">
                   <p className="font-semibold mb-2">💡 {t("payment.afterSubmission")}</p>
                   <ul className="space-y-1 text-xs">
@@ -371,14 +390,6 @@ const PaymentPage = () => {
                   <p className="text-xs uppercase tracking-[0.18em] text-white/45 mb-2">Status</p>
                   <Badge className={accessState.className}>{accessState.label}</Badge>
                   <p className="text-white/60 text-sm mt-3">{accessState.description}</p>
-                </div>
-                <div className="rounded-xl border border-white/10 bg-white/[0.04] p-4">
-                  <p className="text-xs uppercase tracking-[0.18em] text-white/45 mb-2">{t("payment.whatHappensNext")}</p>
-                  <div className="space-y-2 text-sm text-white/65">
-                    <p>{t("payment.transferInstructions")}</p>
-                    <p>{t("payment.uploadInstructions")}</p>
-                    <p>{t("payment.adminReviewInstructions")}</p>
-                  </div>
                 </div>
               </CardContent>
             </Card>
