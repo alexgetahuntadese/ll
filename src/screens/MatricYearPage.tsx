@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -28,6 +29,7 @@ import StarField from '@/components/StarField';
 import { useAuth } from "@/hooks/useAuth";
 import { isFreeMatricSubject } from '@/lib/paymentAccess';
 import { getMatricSubjectsForYear } from '@/data/matricExams';
+import { paymentService } from '@/lib/back4app/payments';
 
 const subjectIcons: Record<string, LucideIcon> = {
   Mathematics: Calculator,
@@ -58,11 +60,42 @@ const subjectColors: Record<string, string> = {
 const MatricYearPage = () => {
   const { year, stream } = useParams<{ year: string; stream: string }>();
   const navigate = useNavigate();
-  const { hasPremiumAccess: premiumAccess } = useAuth();
+  const { hasPremiumAccess: premiumAccess, user, profile } = useAuth();
+  const [backendPremiumAccess, setBackendPremiumAccess] = useState(false);
   const yearNum = Number(year);
   const streamKey = stream ?? 'natural';
   const streamLabel = streamKey === 'social' ? 'Social Science' : 'Natural Science';
   const subjects = getMatricSubjectsForYear(yearNum, streamKey);
+
+  const effectivePremiumAccess = premiumAccess || backendPremiumAccess;
+
+  useEffect(() => {
+    const userId = user?.id || profile?.id || "";
+    if (premiumAccess || !userId) {
+      return;
+    }
+
+    let active = true;
+    const checkBackendPremium = async () => {
+      try {
+        const receipts = await paymentService.getBackend4AppReceipts(userId);
+        if (!active) {
+          return;
+        }
+
+        const hasApprovedReceipt = receipts.some((item) => item.status === "approved" || item.status === "verified");
+        setBackendPremiumAccess(hasApprovedReceipt);
+      } catch (error) {
+        console.error("Failed to verify Back4App premium access:", error);
+      }
+    };
+
+    void checkBackendPremium();
+
+    return () => {
+      active = false;
+    };
+  }, [backendPremiumAccess, premiumAccess, profile?.id, user?.id]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-950 via-violet-900 to-purple-950 pt-14 px-4 pb-4 md:p-8 md:pt-14 overflow-hidden relative">
@@ -93,7 +126,7 @@ const MatricYearPage = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           {subjects.map((subj, index) => {
             const hasQuestions = subj.questionCount > 0;
-            const locked = hasQuestions && !premiumAccess && !isFreeMatricSubject(index);
+            const locked = hasQuestions && !effectivePremiumAccess && !isFreeMatricSubject(index);
             const SubjectIcon = subjectIcons[subj.subject] ?? BookOpen;
             const colorClass = subjectColors[subj.subject] ?? 'from-gray-500 to-gray-600';
             const isAvailable = hasQuestions && !locked;

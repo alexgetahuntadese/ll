@@ -11,11 +11,13 @@ import StarField from '@/components/StarField';
 import { useAuth } from '@/hooks/useAuth';
 import { isFreeMatricSubject } from '@/lib/paymentAccess';
 import { getMatricQuestions, getMatricSubjectIndex } from '@/data/matricExams';
+import { paymentService } from '@/lib/back4app/payments';
 
 const MatricQuizPage = () => {
   const { year, stream, subject } = useParams<{ year: string; stream: string; subject: string }>();
   const navigate = useNavigate();
-  const { hasPremiumAccess } = useAuth();
+  const { hasPremiumAccess, user, profile } = useAuth();
+  const [backendPremiumAccess, setBackendPremiumAccess] = useState(false);
   const yearNum = Number(year);
   const streamKey = stream ?? 'natural';
   const streamLabel = streamKey === 'social' ? 'Social Science' : 'Natural Science';
@@ -64,7 +66,35 @@ const MatricQuizPage = () => {
     };
   }, [streamKey, subject, yearNum]);
 
-  const locked = subjectIndex >= 0 && !hasPremiumAccess && !isFreeMatricSubject(subjectIndex);
+  useEffect(() => {
+    const userId = user?.id || profile?.id || "";
+    if (hasPremiumAccess || !userId) {
+      return;
+    }
+
+    let active = true;
+    const checkBackendPremium = async () => {
+      try {
+        const receipts = await paymentService.getBackend4AppReceipts(userId);
+        if (!active) {
+          return;
+        }
+
+        const hasApprovedReceipt = receipts.some((item) => item.status === "approved" || item.status === "verified");
+        setBackendPremiumAccess(hasApprovedReceipt);
+      } catch (error) {
+        console.error("Failed to verify Back4App premium access:", error);
+      }
+    };
+
+    void checkBackendPremium();
+
+    return () => {
+      active = false;
+    };
+  }, [hasPremiumAccess, profile?.id, user?.id]);
+
+  const locked = subjectIndex >= 0 && !effectivePremiumAccess && !isFreeMatricSubject(subjectIndex);
 
   if (isLoading) {
     return (
@@ -96,6 +126,7 @@ const MatricQuizPage = () => {
   }
 
   const currentQuestion: MatricExamQuestion = questions[currentIndex];
+  const effectivePremiumAccess = hasPremiumAccess || backendPremiumAccess;
 
   const renderRichText = (text: string, keyPrefix: string) => {
     const parts = text.split(/(\[Image:\s*[^\]]+\])/g).filter(Boolean);

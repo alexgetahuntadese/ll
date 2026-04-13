@@ -38,16 +38,15 @@ export const hasPremiumPreferences = (preferences: Json | null | undefined) => {
   const paymentStatus = getPaymentStatus(preferences);
   const paidUntil = getPaidUntil(preferences);
 
-  if (typeof premiumFlag !== "boolean" || !premiumFlag) {
-    return false;
-  }
+  const statusIsValid = paymentStatus === "verified" || paymentStatus === "approved";
+  const premiumIsValid = typeof premiumFlag === "boolean" && premiumFlag;
 
-  if (paymentStatus && paymentStatus !== "verified" && paymentStatus !== "approved") {
+  if (!premiumIsValid && !statusIsValid) {
     return false;
   }
 
   if (!paidUntil) {
-    return true;
+    return statusIsValid || premiumIsValid;
   }
 
   return new Date(paidUntil).getTime() > Date.now();
