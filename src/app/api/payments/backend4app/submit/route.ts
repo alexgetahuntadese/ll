@@ -26,10 +26,13 @@ export async function POST(request: NextRequest) {
 
     // Upload receipt to Back4App file storage
     let receiptUrl = null;
-    if (receiptBase64 && receiptFileName) {
+    if (receiptBase64) {
+      const fileName = receiptFileName || `receipt-${Date.now()}.jpg`;
+      const contentType = receiptContentType || "image/jpeg";
+
       const uploadedFile = await uploadReceiptToBack4App(
-        receiptFileName,
-        receiptContentType || "application/octet-stream",
+        fileName,
+        contentType,
         receiptBase64
       );
       receiptUrl = uploadedFile.url;

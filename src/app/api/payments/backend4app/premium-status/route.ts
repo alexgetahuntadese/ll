@@ -1,39 +1,68 @@
 import { NextRequest, NextResponse } from "next/server";
 
-// Import the shared notification map from the approve route
-// This is a simple in-memory solution for real-time updates
-const premiumNotifications = new Map<string, { timestamp: number; userId: string }>();
-
-// Export the map so it can be shared with the approve route
-export { premiumNotifications };
+import { listSubmissions } from "../../_lib";
+import { userProfileService } from "@/lib/firebase/auth";
+import { hasPremiumPreferences, setPremiumAccess } from "@/lib/authRoles";
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('userId');
+    const userId = searchParams.get("userId");
 
     if (!userId) {
       return NextResponse.json({ error: "Missing userId parameter." }, { status: 400 });
     }
 
-    // Check if there's a premium notification for this user
-    const notification = premiumNotifications.get(userId);
-    
-    if (notification) {
-      // Clear the notification after checking
-      premiumNotifications.delete(userId);
-      
+    const userProfile = await userProfileService.getUserProfile(userId);
+    const profileHasPremium = hasPremiumPreferences(userProfile?.preferences as any);
+
+    if (profileHasPremium) {
       return NextResponse.json({
-        hasPremiumUpdate: true,
-        timestamp: notification.timestamp,
-        message: "Your payment has been approved! Premium access is now available."
+        hasPremiumUpdate: false,
+        timestamp: null,
+        message: null,
+      });
+    }
+
+    const approvedPayments = await listSubmissions({
+      user: {
+        __type: "Pointer",
+        className: "_User",
+        objectId: userId,
+      },
+      status: {
+        $in: ["approved", "verified"],
+      },
+    });
+
+    if (!approvedPayments?.results?.length) {
+      return NextResponse.json({
+        hasPremiumUpdate: false,
+        timestamp: null,
+        message: null,
+      });
+    }
+
+    if (userProfile) {
+      const latestSubmission = approvedPayments.results[0];
+      const nextPreferences = setPremiumAccess(userProfile.preferences, {
+        premium: true,
+        paymentStatus: "approved",
+        paidAt: new Date().toISOString(),
+        paidUntil: null,
+        paymentSubmissionId: latestSubmission.objectId,
+      });
+
+      await userProfileService.upsertProfile({
+        ...userProfile,
+        preferences: nextPreferences,
       });
     }
 
     return NextResponse.json({
-      hasPremiumUpdate: false,
-      timestamp: null,
-      message: null
+      hasPremiumUpdate: true,
+      timestamp: Date.now(),
+      message: "Your payment has been approved! Premium access is now available.",
     });
   } catch (error) {
     console.error("Premium status check error:", error);

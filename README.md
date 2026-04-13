@@ -71,6 +71,17 @@ This app already expects a Supabase project and uses it for authentication plus 
 5. In the Supabase dashboard, enable Email auth and configure your site URL / redirect URL for password reset and confirmation links.
 6. The app now includes an auth-to-profile sync trigger, so new auth signups create or refresh a row in `public.users` automatically.
 
+## Back4App setup
+
+This project also expects Back4App/Parse environment variables for payment submission and receipt upload. Copy `.env.example` to `.env` and fill in:
+
+- `BACK4APP_APP_ID`
+- `BACK4APP_JS_KEY`
+- `BACK4APP_MASTER_KEY` (required for server-side file uploads and payment approval)
+- `BACK4APP_SERVER_URL`
+
+The default server URL is `https://parseapi.back4app.com/`.
+
 The current local `.env` already points at project `fwbiikxkfzuvjfqitppo`, so the main missing piece was the reproducible database setup.
 
 ## How can I deploy this project?

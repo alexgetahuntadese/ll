@@ -20,14 +20,14 @@ export const isAdminPreferences = (preferences: Json | null | undefined) =>
 
 export const getPaymentStatus = (preferences: Json | null | undefined) => {
   const objectValue = asObject(preferences);
-  const status = objectValue?.payment_status;
+  const status = objectValue?.payment_status ?? objectValue?.paymentStatus;
 
   return typeof status === "string" ? status.trim().toLowerCase() : "";
 };
 
 export const getPaidUntil = (preferences: Json | null | undefined) => {
   const objectValue = asObject(preferences);
-  const paidUntil = objectValue?.paid_until;
+  const paidUntil = objectValue?.paid_until ?? objectValue?.paidUntil;
 
   return typeof paidUntil === "string" && paidUntil.trim() ? paidUntil.trim() : null;
 };
@@ -86,26 +86,34 @@ export const setPremiumAccess = (
 
   if (options.paymentStatus) {
     nextPreferences.payment_status = options.paymentStatus;
+    nextPreferences.paymentStatus = options.paymentStatus;
   } else {
     delete nextPreferences.payment_status;
+    delete nextPreferences.paymentStatus;
   }
 
   if (options.paidAt) {
     nextPreferences.paid_at = options.paidAt;
+    nextPreferences.paidAt = options.paidAt;
   } else {
     delete nextPreferences.paid_at;
+    delete nextPreferences.paidAt;
   }
 
   if (options.paidUntil) {
     nextPreferences.paid_until = options.paidUntil;
+    nextPreferences.paidUntil = options.paidUntil;
   } else {
     delete nextPreferences.paid_until;
+    delete nextPreferences.paidUntil;
   }
 
   if (options.paymentSubmissionId) {
     nextPreferences.payment_submission_id = options.paymentSubmissionId;
+    nextPreferences.paymentSubmissionId = options.paymentSubmissionId;
   } else {
     delete nextPreferences.payment_submission_id;
+    delete nextPreferences.paymentSubmissionId;
   }
 
   return nextPreferences;

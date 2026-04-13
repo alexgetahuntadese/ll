@@ -49,11 +49,16 @@ const getHeaders = (useMasterKey = false): Record<string, string> => {
     "X-Parse-Application-Id": APP_ID!,
   };
 
-  if (useMasterKey && MASTER_KEY) {
+  if (useMasterKey) {
+    if (!MASTER_KEY) {
+      throw new Error("Back4App master key is required for server-side operations. Set BACK4APP_MASTER_KEY in your environment.");
+    }
     headers["X-Parse-Master-Key"] = MASTER_KEY;
   } else {
-    // Use JavaScript Key for REST API
-    headers["X-Parse-JavaScript-Key"] = JS_KEY!;
+    if (!JS_KEY) {
+      throw new Error("Back4App JS key is required when master key is not used. Set BACK4APP_JS_KEY in your environment.");
+    }
+    headers["X-Parse-JavaScript-Key"] = JS_KEY;
   }
 
   return headers;

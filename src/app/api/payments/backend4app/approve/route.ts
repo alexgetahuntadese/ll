@@ -3,7 +3,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSubmission, mapParseSubmission, updateSubmission } from "../../_lib";
 import { userProfileService } from "@/lib/firebase/auth";
 import { setPremiumAccess } from "@/lib/authRoles";
-import { premiumNotifications } from "../premium-status/route";
 
 export async function POST(request: NextRequest) {
   try {
@@ -33,22 +32,16 @@ export async function POST(request: NextRequest) {
           const currentPreferences = userProfile.preferences as any || {};
           const updatedPreferences = setPremiumAccess(currentPreferences, {
             premium: true,
-            paymentStatus: "verified",
+            paymentStatus: "approved",
             paidAt: new Date().toISOString(),
             paidUntil: null, // No expiration - lifetime access
             paymentSubmissionId: paymentId,
           });
 
           // Update the user profile with premium access
-          const updatedProfile = await userProfileService.upsertProfile({
+          await userProfileService.upsertProfile({
             ...userProfile,
             preferences: updatedPreferences,
-          });
-          
-          // Store notification for real-time premium access update
-          premiumNotifications.set(existing.user.objectId, {
-            timestamp: Date.now(),
-            userId: existing.user.objectId,
           });
           
           console.log(`Granted premium access to user ${existing.user.objectId} for payment ${paymentId}`);

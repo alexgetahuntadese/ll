@@ -81,6 +81,9 @@ export const paymentService = {
 
   async submitPaymentWithReceipt(input: CreatePaymentSubmissionInput & { receiptFile: File }): Promise<PaymentSubmissionWithReceiptUrl> {
     const receiptBase64 = await fileToDataUrl(input.receiptFile);
+    const receiptFileName = input.receiptFile.name || `receipt-${Date.now()}.jpg`;
+    const receiptContentType = input.receiptFile.type || "image/jpeg";
+
     const submission = await apiJson<ApiSubmission>("/api/payments/backend4app/submit", {
       method: "POST",
       body: JSON.stringify({
@@ -94,8 +97,8 @@ export const paymentService = {
         paymentMethod: input.paymentMethod,
         submitterNotes: input.submitterNotes || null,
         receiptBase64,
-        receiptFileName: input.receiptFile.name,
-        receiptContentType: input.receiptFile.type,
+        receiptFileName,
+        receiptContentType,
       }),
     });
 
