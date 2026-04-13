@@ -46,11 +46,25 @@ const ensureAuthInitialized = async () => {
   await authInitializationPromise;
 };
 
-export const normalizePhoneNumber = (phone: string) => phone.trim().replace(/[^\d+]/g, "");
+export const normalizePhoneNumber = (phone: string) => {
+  const digits = phone.replace(/\D/g, "");
+  if (digits.startsWith("2519") && digits.length === 12) {
+    return `0${digits.slice(3)}`;
+  }
+  if (digits.startsWith("002519") && digits.length === 13) {
+    return `0${digits.slice(5)}`;
+  }
+  if (digits.length === 9 && digits.startsWith("9")) {
+    return `0${digits}`;
+  }
+  if (digits.length === 10 && digits.startsWith("09")) {
+    return digits;
+  }
+  return digits;
+};
 
 export const isValidEthiopianPhoneNumber = (phone: string) => {
-  const digits = phone.replace(/\D/g, "");
-  return /^09\d{8}$/.test(digits);
+  return /^09\d{8}$/.test(phone);
 };
 
 const sanitizePhoneDigits = (phone: string) => normalizePhoneNumber(phone).replace(/[^\d]/g, "");
@@ -318,7 +332,8 @@ export const authService = {
 
   async signIn(input: { phone: string; password: string }) {
     await ensureAuthInitialized();
-    const credential = await signInWithEmailAndPassword(auth!, phoneToEmail(input.phone), input.password);
+    const normalizedPhone = normalizePhoneNumber(input.phone);
+    const credential = await signInWithEmailAndPassword(auth!, phoneToEmail(normalizedPhone), input.password);
     // Skip profile fetching for faster sign-in - let AuthContext handle it
     return this.getSession();
   },
