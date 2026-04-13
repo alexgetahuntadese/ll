@@ -1,6 +1,5 @@
 import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
-import {
+import { useNavigate } from "react-router-dom";import { useAuth } from '@/hooks/useAuth';import {
   ArrowRight,
   BookOpen,
   CheckCircle2,
@@ -61,6 +60,14 @@ const sections = [
 
 const Index = () => {
   const navigate = useNavigate();
+  const { isAuthenticated, displayName, profile, session, signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/");
+  };
+
+  const userName = profile?.name || displayName || session?.user.user_metadata?.name || session?.user.phone || "Student";
 
   return (
     <div className="min-h-screen bg-stone-100 text-slate-900">
@@ -83,7 +90,14 @@ const Index = () => {
           <nav className="hidden items-center gap-6 text-sm text-slate-600 md:flex">
             <button onClick={() => navigate("/books")} className="transition hover:text-slate-900">Books</button>
             <button onClick={() => navigate("/matric")} className="transition hover:text-slate-900">Exams</button>
-            <button onClick={() => navigate("/login")} className="transition hover:text-slate-900">Login</button>
+            {isAuthenticated ? (
+              <>
+                <button onClick={() => navigate("/profile")} className="transition hover:text-slate-900">Profile</button>
+                <button onClick={handleSignOut} className="transition hover:text-slate-900">Sign Out</button>
+              </>
+            ) : (
+              <button onClick={() => navigate("/login")} className="transition hover:text-slate-900">Login</button>
+            )}
           </nav>
         </motion.header>
 
@@ -110,20 +124,59 @@ const Index = () => {
             </p>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <button
-                onClick={() => navigate("/signup")}
-                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-900 px-6 py-4 text-base font-semibold text-white transition hover:bg-slate-800"
-              >
-                Create student account
-                <ArrowRight className="h-4 w-4" />
-              </button>
-              <button
-                onClick={() => navigate("/matric")}
-                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-300 bg-white px-6 py-4 text-base font-semibold text-slate-800 transition hover:border-slate-400 hover:bg-stone-50"
-              >
-                Browse exam practice
-              </button>
+              {isAuthenticated ? (
+                <>
+                  <button
+                    onClick={() => navigate("/profile")}
+                    className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-900 px-6 py-4 text-base font-semibold text-white transition hover:bg-slate-800"
+                  >
+                    Open profile
+                    <ArrowRight className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => navigate("/grades")}
+                    className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-300 bg-white px-6 py-4 text-base font-semibold text-slate-800 transition hover:border-slate-400 hover:bg-stone-50"
+                  >
+                    Continue studying
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={() => navigate("/signup")}
+                    className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-900 px-6 py-4 text-base font-semibold text-white transition hover:bg-slate-800"
+                  >
+                    Create student account
+                    <ArrowRight className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => navigate("/matric")}
+                    className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-300 bg-white px-6 py-4 text-base font-semibold text-slate-800 transition hover:border-slate-400 hover:bg-stone-50"
+                  >
+                    Browse exam practice
+                  </button>
+                </>
+              )}
             </div>
+
+            {isAuthenticated ? (
+              <div className="mt-8 rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-sm">
+                <p className="text-sm uppercase tracking-[0.18em] text-slate-500">Active session</p>
+                <div className="mt-4 sm:flex sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-xl font-semibold text-slate-900">Welcome back, {userName}.</p>
+                    <p className="mt-2 text-sm leading-6 text-slate-600">
+                      Your profile is connected, and this session will keep your progress in sync.
+                    </p>
+                  </div>
+                  <div className="mt-4 rounded-2xl bg-slate-100 p-4 text-sm text-slate-700 sm:mt-0">
+                    <p className="font-semibold text-slate-900">Session details</p>
+                    <p className="mt-2">Phone: {session?.user.phone || profile?.phone || "Unknown"}</p>
+                    <p>Account: {profile?.name ? "Student profile" : "Anonymous"}</p>
+                  </div>
+                </div>
+              </div>
+            ) : null}
 
             <div className="mt-10 grid gap-3 sm:grid-cols-2">
               {trustPoints.map((item) => (
