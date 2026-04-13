@@ -4,10 +4,11 @@ export {
   formatAuthError,
   isPhoneAlreadyRegisteredError,
   normalizePhoneNumber,
+  isValidEthiopianPhoneNumber,
   userProfileService,
   userService,
 } from "@/lib/firebase/auth";
-export { paymentAdminService, paymentService } from "@/lib/back4app/payments";
+export { paymentService } from "@/lib/back4app/payments";
 export { careerSimulatorService } from "@/lib/firebase/functions";
 export type {
   AppSession,

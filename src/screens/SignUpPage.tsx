@@ -7,10 +7,12 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Loader2, Eye, EyeOff } from "lucide-react";
+import AppLogo from "@/components/AppLogo";
 import {
   formatAuthError,
   isPhoneAlreadyRegisteredError,
   normalizePhoneNumber,
+  isValidEthiopianPhoneNumber,
 } from "@/services/firebaseService";
 
 const SignUpPage = () => {
@@ -26,8 +28,8 @@ const SignUpPage = () => {
     e.preventDefault();
     const normalizedPhone = normalizePhoneNumber(phone);
     
-    if (!fullName.trim() || !normalizedPhone || !password) {
-      toast.error("Please fill in your name, mobile number, and password");
+    if (!fullName.trim() || !normalizedPhone || !isValidEthiopianPhoneNumber(normalizedPhone) || !password) {
+      toast.error("Mobile number must be 10 digits and start with 09, and all fields are required.");
       return;
     }
 
@@ -60,6 +62,7 @@ const SignUpPage = () => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-950 via-violet-900 to-purple-950 p-4">
       <Card className="w-full max-w-md bg-white/10 backdrop-blur-lg border-white/20">
         <CardHeader className="text-center">
+          <AppLogo className="mx-auto mb-4 text-white" />
           <CardTitle className="text-2xl text-white">Create Account</CardTitle>
           <CardDescription className="text-white/70">
             Start your learning journey today

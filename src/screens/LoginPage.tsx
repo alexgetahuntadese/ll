@@ -8,7 +8,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { Eye, EyeOff } from "lucide-react";
-import { formatAuthError, normalizePhoneNumber } from "@/services/firebaseService";
+import AppLogo from "@/components/AppLogo";
+import { formatAuthError, normalizePhoneNumber, isValidEthiopianPhoneNumber } from "@/services/firebaseService";
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -24,8 +25,8 @@ const LoginPage = () => {
     e.preventDefault();
     const normalizedPhone = normalizePhoneNumber(phone);
     
-    if (!normalizedPhone || !password) {
-      toast.error("Please enter mobile number and password");
+    if (!normalizedPhone || !isValidEthiopianPhoneNumber(normalizedPhone) || !password) {
+      toast.error("Mobile number must be 10 digits and start with 09, and password is required.");
       return;
     }
 
@@ -43,6 +44,7 @@ const LoginPage = () => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-950 via-violet-900 to-purple-950 p-4">
       <Card className="w-full max-w-md bg-white/10 backdrop-blur-lg border-white/20">
         <CardHeader className="text-center">
+          <AppLogo className="mx-auto mb-4 text-white" />
           <CardTitle className="text-2xl text-white">Welcome Back</CardTitle>
           <CardDescription className="text-white/70">
             Sign in to continue your learning journey

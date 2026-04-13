@@ -48,6 +48,11 @@ const ensureAuthInitialized = async () => {
 
 export const normalizePhoneNumber = (phone: string) => phone.trim().replace(/[^\d+]/g, "");
 
+export const isValidEthiopianPhoneNumber = (phone: string) => {
+  const digits = phone.replace(/\D/g, "");
+  return /^09\d{8}$/.test(digits);
+};
+
 const sanitizePhoneDigits = (phone: string) => normalizePhoneNumber(phone).replace(/[^\d]/g, "");
 
 const phoneToEmail = (phone: string) => `${sanitizePhoneDigits(phone)}@${PHONE_EMAIL_DOMAIN}`;

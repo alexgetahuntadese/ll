@@ -15,8 +15,8 @@ const AppLogo = ({ compact = false, className = "", showText = true }: AppLogoPr
       />
       {showText && !compact && (
         <div className="min-w-0 leading-tight">
-          <div className="truncate text-xs font-black uppercase tracking-[0.18em] text-white sm:text-sm sm:tracking-[0.22em]">Simple Road</div>
-          <div className="truncate text-[10px] text-white/60 sm:text-[11px]">Elite Education Platform</div>
+          <div className="truncate text-xs font-black uppercase tracking-[0.18em] text-current sm:text-sm sm:tracking-[0.22em]">Simple Road</div>
+          <div className="truncate text-[10px] text-current/60 sm:text-[11px]">Elite Education Platform</div>
         </div>
       )}
     </div>
