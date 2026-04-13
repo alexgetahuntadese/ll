@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bearer Token Fix Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        input {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Bearer Token Authentication Test</h1>
+        <p>This page tests if the Bearer token authentication fix is working properly.</p>
+        
+        <div id="status" class="status info">
+            Initializing test...
+        </div>
+
+        <div id="loginSection">
+            <h3>Test Login</h3>
+            <input type="email" id="email" placeholder="Email address" />
+            <input type="password" id="password" placeholder="Password" />
+            <button onclick="testLogin()">Test Sign In</button>
+            <button onclick="testLogout()">Sign Out</button>
+        </div>
+
+        <div id="testSection">
+            <h3>Authentication Tests</h3>
+            <button onclick="testAuthStatus()">Check Auth Status</button>
+            <button onclick="testProtectedAPI()">Test Protected API</button>
+            <button onclick="testSessionRefresh()">Test Session Refresh</button>
+        </div>
+
+        <div id="results"></div>
+    </div>
+
+    <script>
+        // Replace with your actual Supabase credentials
+        const SUPABASE_URL = 'https://your-project.supabase.co';
+        const SUPABASE_ANON_KEY = 'your-anon-key';
+
+        // Initialize Supabase client with PKCE flow
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+            auth: {
+                persistSession: true,
+                autoRefreshToken: true,
+                detectSessionInUrl: true,
+                flowType: 'pkce'
+            }
+        });
+
+        function updateStatus(message, type = 'info') {
+            const statusEl = document.getElementById('status');
+            statusEl.className = `status ${type}`;
+            statusEl.textContent = message;
+        }
+
+        function addResult(message, type = 'info') {
+            const resultsEl = document.getElementById('results');
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `status ${type}`;
+            resultDiv.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            resultsEl.appendChild(resultDiv);
+        }
+
+        async function testAuthStatus() {
+            try {
+                updateStatus('Checking authentication status...');
+                
+                const { data: { session }, error } = await supabase.auth.getSession();
+                
+                if (error) {
+                    addResult(`❌ Auth status error: ${error.message}`, 'error');
+                    return;
+                }
+                
+                if (session) {
+                    addResult(`✅ User authenticated: ${session.user.email}`, 'success');
+                    addResult(`✅ Session expires: ${new Date(session.expires_at * 1000).toLocaleString()}`, 'success');
+                    addResult(`✅ Access token length: ${session.access_token.length} characters`, 'success');
+                } else {
+                    addResult(`ℹ️ No active session found`, 'info');
+                }
+            } catch (error) {
+                addResult(`❌ Unexpected error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testLogin() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            if (!email || !password) {
+                addResult('❌ Please enter email and password', 'error');
+                return;
+            }
+            
+            try {
+                updateStatus('Attempting sign in...');
+                
+                const { data, error } = await supabase.auth.signInWithPassword({
+                    email,
+                    password,
+                });
+                
+                if (error) {
+                    addResult(`❌ Sign in failed: ${error.message}`, 'error');
+                    if (error.message.includes('Bearer') || error.message.includes('JWT')) {
+                        addResult('🔍 This appears to be a Bearer token issue!', 'error');
+                    }
+                    return;
+                }
+                
+                addResult(`✅ Sign in successful for ${data.user.email}`, 'success');
+                updateStatus('Sign in successful!', 'success');
+                
+                // Test the session immediately
+                setTimeout(testAuthStatus, 1000);
+                
+            } catch (error) {
+                addResult(`❌ Unexpected error during sign in: ${error.message}`, 'error');
+            }
+        }
+
+        async function testLogout() {
+            try {
+                updateStatus('Signing out...');
+                const { error } = await supabase.auth.signOut();
+                
+                if (error) {
+                    addResult(`❌ Sign out error: ${error.message}`, 'error');
+                } else {
+                    addResult('✅ Sign out successful', 'success');
+                    updateStatus('Signed out', 'info');
+                }
+            } catch (error) {
+                addResult(`❌ Unexpected error during sign out: ${error.message}`, 'error');
+            }
+        }
+
+        async function testProtectedAPI() {
+            try {
+                updateStatus('Testing protected API call...');
+                
+                // Test a protected API call
+                const { data, error } = await supabase
+                    .from('saved_questions')
+                    .select('count')
+                    .limit(1);
+                
+                if (error) {
+                    addResult(`❌ API call failed: ${error.message}`, 'error');
+                    if (error.message.includes('Bearer token')) {
+                        addResult('🔍 Bearer token authentication issue detected!', 'error');
+                        addResult('💡 Make sure you have run the SQL fix script', 'info');
+                    }
+                    return;
+                }
+                
+                addResult('✅ Protected API call successful - Bearer token is working!', 'success');
+                addResult(`📊 Query result: ${JSON.stringify(data)}`, 'success');
+                
+            } catch (error) {
+                addResult(`❌ Unexpected API error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testSessionRefresh() {
+            try {
+                updateStatus('Testing session refresh...');
+                
+                const { data, error } = await supabase.auth.refreshSession();
+                
+                if (error) {
+                    addResult(`❌ Session refresh failed: ${error.message}`, 'error');
+                    return;
+                }
+                
+                addResult('✅ Session refresh successful', 'success');
+                if (data.session) {
+                    addResult(`🔄 New session expires: ${new Date(data.session.expires_at * 1000).toLocaleString()}`, 'success');
+                }
+                
+            } catch (error) {
+                addResult(`❌ Session refresh error: ${error.message}`, 'error');
+            }
+        }
+
+        // Initialize the test
+        document.addEventListener('DOMContentLoaded', function() {
+            updateStatus('Test page loaded. Ready to test Bearer token fix.');
+            addResult('🚀 Bearer token test page initialized', 'info');
+            
+            // Check initial auth status
+            setTimeout(testAuthStatus, 1000);
+        });
+    </script>
+</body>
+</html>

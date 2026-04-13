@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <defs>
+    <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#fbbf24;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#f59e0b;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#d97706;stop-opacity:1" />
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Background circle -->
+  <circle cx="100" cy="100" r="90" fill="url(#goldGradient)" opacity="0.1"/>
+  
+  <!-- Crown icon -->
+  <g transform="translate(100, 85)" filter="url(#glow)">
+    <path d="M-35 20 L-25 -10 L-10 5 L0 -15 L10 5 L25 -10 L35 20 L25 25 L-25 25 Z" 
+          fill="url(#goldGradient)" stroke="#fbbf24" stroke-width="2"/>
+    <circle cx="-25" cy="-10" r="4" fill="#fbbf24"/>
+    <circle cx="0" cy="-15" r="4" fill="#fbbf24"/>
+    <circle cx="25" cy="-10" r="4" fill="#fbbf24"/>
+  </g>
+  
+  <!-- Text: Simple Road -->
+  <text x="100" y="145" 
+        font-family="system-ui, -apple-system, sans-serif" 
+        font-size="18" 
+        font-weight="bold" 
+        fill="#fbbf24" 
+        text-anchor="middle"
+        letter-spacing="1">
+    SIMPLE ROAD
+  </text>
+  
+  <!-- Decorative stars -->
+  <polygon points="100,30 102,35 107,35 103,38 105,43 100,40 95,43 97,38 93,35 98,35" 
+           fill="#fbbf24" opacity="0.8"/>
+</svg>

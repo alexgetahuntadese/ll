@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment History Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            white-space: pre-wrap;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+        }
+    </style>
+</head>
+<body>
+    <h1>Payment History Test</h1>
+    
+    <div class="form-group">
+        <label for="userId">User ID:</label>
+        <input type="text" id="userId" value="test-user-123" placeholder="Enter user ID">
+    </div>
+    
+    <div class="form-group">
+        <label for="status">Status (optional):</label>
+        <select id="status">
+            <option value="">All Statuses</option>
+            <option value="pending">Pending</option>
+            <option value="verified">Verified</option>
+            <option value="rejected">Rejected</option>
+            <option value="approved">Approved</option>
+        </select>
+    </div>
+    
+    <div class="form-group">
+        <label for="limit">Limit (optional):</label>
+        <input type="number" id="limit" placeholder="Number of results" min="1" max="100">
+    </div>
+    
+    <div class="form-group">
+        <label for="offset">Offset (optional):</label>
+        <input type="number" id="offset" placeholder="Skip results" min="0">
+    </div>
+    
+    <button onclick="testPaymentHistory()">Test Payment History</button>
+    <button onclick="clearResults()">Clear Results</button>
+    
+    <div id="result" class="result" style="display: none;"></div>
+
+    <script>
+        async function testPaymentHistory() {
+            const resultDiv = document.getElementById('result');
+            const userId = document.getElementById('userId').value;
+            const status = document.getElementById('status').value;
+            const limit = document.getElementById('limit').value;
+            const offset = document.getElementById('offset').value;
+
+            if (!userId) {
+                showResult('User ID is required', 'error');
+                return;
+            }
+
+            const params = new URLSearchParams({ userId });
+            if (status) params.append('status', status);
+            if (limit) params.append('limit', limit);
+            if (offset) params.append('offset', offset);
+
+            try {
+                showResult('Loading...', 'success');
+                const response = await fetch(`/api/payments/history?${params.toString()}`);
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Request failed');
+                }
+
+                showResult(`Success!\n\n${JSON.stringify(data, null, 2)}`, 'success');
+            } catch (error) {
+                showResult(`Error: ${error.message}`, 'error');
+            }
+        }
+
+        function showResult(message, type) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.textContent = message;
+            resultDiv.className = `result ${type}`;
+            resultDiv.style.display = 'block';
+        }
+
+        function clearResults() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'none';
+        }
+    </script>
+</body>
+</html>

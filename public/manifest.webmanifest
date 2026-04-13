@@ -1,0 +1,23 @@
+{
+  "name": "Simple Road",
+  "short_name": "Simple Road",
+  "description": "Offline-friendly study app for Ethiopian students with quizzes, notes, books, and progress tracking.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#140b2d",
+  "theme_color": "#140b2d",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48 32x32 16x16",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
